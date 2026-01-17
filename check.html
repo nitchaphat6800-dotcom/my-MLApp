@@ -14,8 +14,78 @@
       <a href="about.html">About Us</a>
     </nav>
 
-    <h1>Check</h1>
+        <h1>Check</h1>
     <p>หน้านี้ใช้สำหรับตรวจสอบหรือประมวลผลข้อมูล</p>
+
+  <!-- ปุ่มเลือกภาพ -->
+  <label for="imageInput">เลือกภาพ</label>
+  <input type="file" id="imageInput" accept="image/*">
+
+  <br><br>
+
+  <!-- แสดงผลลัพธ์ -->
+  <div id="label-container"></div>
+
+  <!-- TensorFlow และ Teachable Machine -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+  <script>
+    const URL = "https://teachablemachine.withgoogle.com/models/8RUqWen8b/";
+
+    let model, maxPredictions;
+
+    async function init() {
+      const modelURL = URL + "model.json";
+      const metadataURL = URL + "metadata.json";
+
+      model = await tmImage.load(modelURL, metadataURL);
+      maxPredictions = model.getTotalClasses();
+    }
+
+    init();
+
+    const imageInput = document.getElementById("imageInput");
+    const labelContainer = document.getElementById("label-container");
+
+    imageInput.addEventListener("change", function () {
+      const file = imageInput.files[0];
+
+      if (file) {
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+          const img = new Image();
+          img.src = e.target.result;
+
+          img.onload = function () {
+            predictImage(img);
+          };
+        };
+
+        reader.readAsDataURL(file);
+      }
+    });
+
+    async function predictImage(image) {
+      const predictions = await model.predict(image);
+
+      // หา class ที่มี probability สูงที่สุด
+      let bestPrediction = predictions[0];
+
+      for (let i = 1; i < predictions.length; i++) {
+        if (predictions[i].probability > bestPrediction.probability) {
+          bestPrediction = predictions[i];
+        }
+      }
+
+      // แสดงเฉพาะผลลัพธ์ที่ดีที่สุด
+      labelContainer.innerHTML =
+        bestPrediction.className +
+        " : " +
+        bestPrediction.probability.toFixed(2);
+    }
+  </script>
   </div>
 
 </body>
